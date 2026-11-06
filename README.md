@@ -1,46 +1,54 @@
 # 方块堡垒 · BLOCK BASTION
 
-浏览器中的 2D 移动堡垒射击肉鸽。原生 Canvas 2D + TypeScript，自行实现战斗、旋转碰撞、模块连接、掉落和建造；无游戏引擎、无外部素材请求。
+Godot 4.7.2 .NET + C# 的 Windows 原生客户端。2D 移动堡垒射击肉鸽：自己组装移动堡垒、在房间里打怪、拾取模块与科技、不断推进远征。
 
-## 运行
+- 项目入口：[`blox-dungoen/project.godot`](blox-dungoen/project.godot)，用 Godot .NET 编辑器导入后按 F6/F5 运行主场景。
+- Windows 构建：`blox-dungoen/builds/windows/BloxDungoen.exe`。分发时需一起复制整个 `windows` 文件夹。
+- 编译、运行、存档与验证细节见 [`blox-dungoen/README.md`](blox-dungoen/README.md)。
 
-需要 Node.js 22.12+ 或 24。
+## 运行与构建
 
-```powershell
-npm.cmd install
-npm.cmd run dev
-```
-
-打开终端显示的本地地址，通常是 http://127.0.0.1:5173 。
+需要 Godot 4.7.2 .NET 与 .NET 10 SDK。
 
 ```powershell
-npm.cmd test
-npm.cmd run build
-npm.cmd run preview
+# 编译 C# 并生成 Windows 构建（含规则测试）
+.\blox-dungoen\Tools\Build-Windows.ps1 -GodotPath 'D:\Godot\Godot_v4.7.2-stable_mono_win64\Godot_v4.7.2-stable_mono_win64_console.exe' -Test
 ```
 
-浏览器验收：开发服务器运行时执行 `npm.cmd run test:e2e`。脚本使用本机 Chrome，找不到时尝试 Edge；也可通过 `BROWSER_PATH` 指定可执行文件。测试截图保存在 `artifacts/`。
+生成后双击 `blox-dungoen\builds\windows\BloxDungoen.exe` 即可游玩，玩家机器不需要 Godot、.NET SDK 或 Node.js。
 
 ## 操作与循环
 
-WASD 按屏幕方向移动，载具自动平滑追随鼠标，按住左键射击，F 交互，Esc 暂停。Q/E 无绑定。
+WASD 按屏幕方向移动；载具平滑追随鼠标；左键射击；F 与设施及出口交互；Esc 暂停；F11 切换窗口与全屏。
 
-准备房内可走近工作台、载具科技和被动终端，或者使用画面下方的快捷入口。被动终端位于机库左下。已解锁模块免费组装，受数量、容量和尺寸科技限制。核心位于 9×9 网格中央；选择蓝图后点击格子放置，点击已有模块可拆下。应用配置后再关闭编辑器。
+机库提供免费的初始组装、载具科技树、最多两个被动的装配，以及出击入口。远征包含五个战斗房、两个功能房和一个首领房；清房后在出口选择奖励倾向，不能回溯。战斗中不能建造；功能房可安装库存实体模块、升级、整修。修改布局后先应用配置，才能维修或升级。
 
-远征包含五个战斗房、两个功能房和一个首领房。战斗结束后靠近战利品拾取，前往北侧出口，选择下一段奖励倾向。战斗中不能建造；在功能房可安装库存实体模块、升级、整修。每个维修站一次免费整修，后续需要废料。修改布局后先应用配置，才能维修或升级。
+模块各有血量，外层装甲挡住普通敌弹；结构断连会使外侧模块脱落，靠近回收后可在功能房重新安装。维修恢复已毁模块；脱落模块必须实际回收，不能通过维修复制。
 
-模块各有血量，外层装甲挡住普通敌弹；结构断连会使外侧模块脱落，靠近回收后可在功能房重新安装。维修会恢复已毁模块；脱落模块需要实际回收，不能通过维修复制。
+核心归零即死亡，免费返回机库。研究点与蓝图拾取即永久保存；废料、模块与本局强化重置。
 
-核心归零即死亡，免费返回准备房。研究点、蓝图拾取时永久保存；废料、模块与本局强化重置。准备房内有两套永久科技：载具性能研究和有限槽位的被动协议。局内永久研究下一局生效。
+## 存档
 
-## 实现与边界
+原生客户端使用 Godot 的 `user://progress-v1.json`，Windows 默认位置是 `%APPDATA%\Godot\app_userdata\BloxDungoen\progress-v1.json`。写入采用临时文件替换并保留 `.bak` 备份，损坏时尝试恢复。当前远征不支持退出续玩。
 
-- `src/data.ts`：模块、科技、房间和战斗参数。
-- `src/core.ts`：占格、连接、旋转碰撞、维修、升级、存档校验。
-- `src/game.ts`：固定步长模拟、敌人、掉落、房间与成长。
-- `src/render.ts` / `src/ui.ts`：Canvas 绘制及 HTML 操作界面。
-- `tests/`：规则测试与浏览器流程验收。
+## 代码分工
 
-永久存档使用本机浏览器 localStorage，键为 `block-bastion.v1`。刷新会结束当前远征，已保存的永久收益不受影响。浏览器禁用存储时，界面会提示无法存档。清除该站点浏览器数据会删除进度。没有联机、触屏操作、云存档或战斗中途续玩。
+- `Definitions.cs`：模块、房间、科技与默认数值。
+- `Rules.cs`：占格、连接、旋转碰撞、损毁恢复和强化。
+- `GameModel.cs`：战斗模拟、敌人、掉落、远征、成长。
+- `SaveStore.cs`：本地永久进度及备份。
+- `Main.cs`：原生窗口、固定步长输入与应用生命周期。
+- `ClientUi.cs`：Godot 原生菜单、组装、科技和结算界面。
+- `ArenaView.cs` / `StructureView.cs`：战场与结构图绘制。
+- `NativeAudio.cs`：程序合成音效；`SelfTests.cs`：Godot 内规则验收。
 
-首版为可调参原型，关卡时长、战斗难度和长期成长仍需实际试玩校准。页面提供音效与屏幕震动开关。开发与生产构建都不需要服务端。
+## 验证
+
+```powershell
+# 规则测试，使用隔离存档，不影响玩家进度
+& 'D:\Godot\Godot_v4.7.2-stable_mono_win64\Godot_v4.7.2-stable_mono_win64_console.exe' --headless --path blox-dungoen -- --self-test
+```
+
+图形冒烟验收用 `--smoke-test`，截图输出到 `.godot/acceptance-screenshots`。
+
+长期养成节奏、10～15 分钟目标时长和难度仍需真实试玩校准；暂不包含云存档、联机、手柄适配或中途续玩。
